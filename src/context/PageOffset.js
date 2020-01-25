@@ -12,14 +12,14 @@ const withPageOffsetContext = Component => (props) => {
     setPageOffset({
       y: window.scrollY + window.innerHeight,
       height: document.body.offsetHeight
-    }), 1000), [])
+    }), 200), [])
 
   useEffect(() => {
     window.addEventListener('scroll', onScrollHandler)
     return () => window.removeEventListener('scroll', onScrollHandler)
   }, [onScrollHandler])
   return (
-    <PageOffsetContext.Provider value={pageOffset}>
+    <PageOffsetContext.Provider value={{ ...pageOffset, forceUpdateOffset: onScrollHandler }}>
       <Component {...props} />
     </PageOffsetContext.Provider>
   )
