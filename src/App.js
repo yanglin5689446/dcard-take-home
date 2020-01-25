@@ -24,6 +24,7 @@ const App = () => {
     setStatus('FETCH_START')
     // if user is typing, cancel previous requests
     if (prevInput !== params.q) {
+      setRepos([])
       abortController.current.abort()
       abortController.current = new AbortController()
     }
@@ -35,12 +36,12 @@ const App = () => {
         } else {
           setRepos(repos.concat(json.items || []))
         }
-        setComplete(json.complete)
+        setComplete(!json.items.length)
         setStatus('FETCH_COMPLETE')
         forceUpdateOffset()
       })
-      .catch(() => {
-        setStatus('FETCH_ERROR')
+      .catch(err => {
+        if (err.name !== 'AbortError') setStatus('FETCH_ERROR')
       })
   }
 
@@ -92,6 +93,13 @@ const App = () => {
             <div className="text-center">
               <h5>Oops, something went wrong!</h5>
               <span>Try again in few minutes. { '🙃' }</span>
+            </div>
+          )
+        }
+        {
+          status === 'FETCH_COMPLETE' && complete && !repos.length && (
+            <div className="text-center">
+              <h5>Nothing found.</h5>
             </div>
           )
         }

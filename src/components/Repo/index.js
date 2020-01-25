@@ -14,7 +14,7 @@ const Repo = ({ html_url, full_name, description, stargazers_count, language }) 
           <span className="pl-2">{ stargazers_count }</span>
         </span>
         <span className="mr-2">
-          <i className="fas fa-star"/>
+          <i className="fas fa-circle"/>
           <span className="pl-2">{ language }</span>
         </span>
       </div>
