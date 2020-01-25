@@ -12,7 +12,8 @@ const App = () => {
   const [repos, setRepos] = useState([])
   const [complete, setComplete] = useState(true)
   const [status, setStatus] = useState('IDLE')
-  const abortController = useRef(new AbortController())
+  // a series of abort controller for debouncing
+  const abortControllers = useRef([])
 
   const fetchData = () => {
     if(!params.q) {
@@ -25,10 +26,16 @@ const App = () => {
     // if user is typing, cancel previous requests
     if (prevInput !== params.q) {
       setRepos([])
-      abortController.current.abort()
-      abortController.current = new AbortController()
+      const length = abortControllers.current.length
+      if (length) {
+        const lastController = abortControllers.current[length - 1]
+        lastController.abort()
+      }
     }
-    fetch(`${API_ENDPOINT}?q=${params.q}&page=${params.page}`, { signal: abortController.current.signal })
+    const newController = new AbortController()
+    abortControllers.current.push(newController)
+
+    setTimeout(() => fetch(`${API_ENDPOINT}?q=${params.q}&page=${params.page}`, { signal: newController.signal })
       .then(response => response.json())
       .then(json => {
         if(prevInput !== params.q){
@@ -39,10 +46,14 @@ const App = () => {
         setComplete(!json.items.length)
         setStatus('FETCH_COMPLETE')
         forceUpdateOffset()
+        abortControllers.current = []
       })
       .catch(err => {
-        if (err.name !== 'AbortError') setStatus('FETCH_ERROR')
-      })
+        if (err.name !== 'AbortError'){
+          setStatus('FETCH_ERROR')
+          abortControllers.current = []
+        }
+      }), 500)
   }
 
   // search changed
