@@ -1,4 +1,6 @@
-import React, { useState, useCallback, useContext, useEffect, useRef } from 'react'
+import React, {
+  useState, useCallback, useContext, useEffect, useRef,
+} from 'react'
 import PageOffsetContext, { withPageOffsetContext } from './context/PageOffset'
 import usePrevious from './utils/usePrevious'
 import Repo from './components/Repo'
@@ -16,7 +18,7 @@ const App = () => {
   const abortControllers = useRef([])
 
   const fetchData = () => {
-    if(!params.q) {
+    if (!params.q) {
       setRepos([])
       setComplete(true)
       setStatus('IDLE')
@@ -26,7 +28,7 @@ const App = () => {
     // if user is typing, cancel previous requests
     if (prevInput !== params.q) {
       setRepos([])
-      const length = abortControllers.current.length
+      const { length } = abortControllers.current
       if (length) {
         const lastController = abortControllers.current[length - 1]
         lastController.abort()
@@ -36,9 +38,9 @@ const App = () => {
     abortControllers.current.push(newController)
 
     setTimeout(() => fetch(`${API_ENDPOINT}?q=${params.q}&page=${params.page}`, { signal: newController.signal })
-      .then(response => response.json())
-      .then(json => {
-        if(prevInput !== params.q){
+      .then((response) => response.json())
+      .then((json) => {
+        if (prevInput !== params.q) {
           setRepos(json.items || [])
         } else {
           setRepos(repos.concat(json.items || []))
@@ -48,8 +50,8 @@ const App = () => {
         forceUpdateOffset()
         abortControllers.current = []
       })
-      .catch(err => {
-        if (err.name !== 'AbortError'){
+      .catch((err) => {
+        if (err.name !== 'AbortError') {
           setStatus('FETCH_ERROR')
           abortControllers.current = []
         }
@@ -57,7 +59,7 @@ const App = () => {
   }
 
   // search changed
-  const onSearch = useCallback(e => setParams({ q: e.target.value, page: params.page }), [params])
+  const onSearch = useCallback((e) => setParams({ q: e.target.value, page: params.page }), [params])
 
   // when scrolling to page end, fetch more repos
   useEffect(() => {
@@ -90,7 +92,7 @@ const App = () => {
       </div>
       <div className="search-result p-2 p-md-5">
         {
-          repos.map(repo => <Repo key={repo.id} {...repo} />)
+          repos.map((repo) => <Repo key={repo.id} {...repo} />)
         }
         {
           status === 'FETCH_START' && (
@@ -103,7 +105,10 @@ const App = () => {
           status === 'FETCH_ERROR' && (
             <div className="text-center">
               <h5>Oops, something went wrong!</h5>
-              <span>Try again in few minutes. { '🙃' }</span>
+              <span>
+                Try again in few minutes.
+                🙃
+              </span>
             </div>
           )
         }
