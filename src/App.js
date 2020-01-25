@@ -1,20 +1,47 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useContext, useEffect } from 'react'
+import PageOffsetContext, { withPageOffsetContext } from './context/PageOffset'
+import usePrevious from './utils/usePrevious'
 import Repo from './components/Repo'
 
 const API_ENDPOINT = 'https://api.github.com/search/repositories'
 
 const App = () => {
-  const [input, setInput] = useState('')
+  const { y, height } = useContext(PageOffsetContext)
+  const [params, setParams] = useState({ q: '', page: 1 })
+  const prevInput = usePrevious(params.q)
   const [repos, setRepos] = useState([])
+  const [complete, setComplete] = useState(false)
 
-  const onSearch = useCallback(e => {
-    setInput(e.target.value)
-    fetch(`${API_ENDPOINT}?q=${e.target.value}`)
+  const fetchData = () => {
+    if(!params.q) {
+      setRepos([])
+      setComplete(false)
+      return
+    }
+    fetch(`${API_ENDPOINT}?q=${params.q}&page=${params.page}`)
       .then(response => response.json())
       .then(json => {
-        setRepos(json.items)
+        if(prevInput !== params.q){
+          setRepos(json.items)
+        } else {
+          setRepos(repos.concat(json.items))
+        }
+        setComplete(json.complete)
       })
-  }, [])
+  }
+
+  // search changed
+  const onSearch = useCallback(e => setParams({ q: e.target.value, page: params.page }), [params])
+
+  // when scrolling to page end, fetch more repos
+  useEffect(() => {
+    if (height - y < 100 && !complete) {
+      setParams({ ...params, page: params.page + 1 })
+    }
+  }, [y, height, params, complete])
+
+  // whenever params changed, fetch data
+  useEffect(fetchData, [params])
 
   return (
     <div className="container">
@@ -24,7 +51,7 @@ const App = () => {
             className="form-control"
             placeholder="Search Repo..."
             type="text"
-            value={input}
+            value={params.q}
             onChange={onSearch}
           />
           <div className="input-group-append">
@@ -43,4 +70,4 @@ const App = () => {
   )
 }
 
-export default App
+export default withPageOffsetContext(App)
